@@ -1,0 +1,15 @@
+{
+	"id": "scryfalatro",
+	"name": "Scryfalatro",
+	"display_name": "Scryfalatro",
+	"author": ["Aluminumroadlion"],
+	"description": "A Balatro mod that adds the jokers from Scryfall's April Fools Day page.",
+	"prefix": "scryfalatro",
+	"main_file": "Scryfalatro.lua",
+    "priority": 0,
+    "version": "1.0.0",
+	"badge_colour": "4f4154",
+    "dependencies": [
+        "Steamodded (>=1.0.0~ALPHA-1307d)"
+    ]
+}
