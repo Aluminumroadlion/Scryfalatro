@@ -301,7 +301,6 @@ SMODS.Joker{
           end
         end
       end
-      print(bolas_num)
       for i = 1, #G.jokers.cards do
         if G.jokers.cards[i] == card and i>bolas_num then
           other_joker = G.jokers.cards[i-bolas_num]
