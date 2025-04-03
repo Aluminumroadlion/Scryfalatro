@@ -19,8 +19,9 @@ SMODS.Joker{
     pos = {x=1, y=0},
     calculate = function(self, card, context)
         if context.selling_self and not card.debuff then
-            SMODS.add_card({key = 'c_hanged_man'})
-            SMODS.add_card({key = 'c_hanged_man'})
+          for i=1,2 do if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+              SMODS.add_card({key = 'c_hanged_man'})
+          end end
         end
     end,
 }
@@ -270,6 +271,7 @@ SMODS.Joker{
 
 SMODS.Joker{
   key = 'nicol_bolas',
+  name = 'Nicol Bolas',
   loc_txt = {
     name = 'Nicol Bolas',
     text={
@@ -286,16 +288,27 @@ SMODS.Joker{
   calculate = function(self, card, context)
     if not card.debuff then
       local other_joker = nil
+      local bolas_num = 1
       for i = 1, #G.jokers.cards do
-          if G.jokers.cards[i] == card and i>1 then other_joker = G.jokers.cards[i-1] end
-      end
-      if other_joker then
-        local ret = SMODS.blueprint_effect(card, other_joker, context)
-        if ret then
-          SMODS.calculate_effect(ret, card) -- use this if you need to do other things afterwards
-          return ret -- use this if you're copying a single joker
+        if G.jokers.cards[i] == card then
+          local consecutive_bolas = true
+          while consecutive_bolas do
+            if i-bolas_num>0 and G.jokers.cards[i-bolas_num].config.center.key == "j_scryfalatro_nicol_bolas" then
+              bolas_num = bolas_num + 1
+            else
+              consecutive_bolas = false
+            end
+          end
         end
       end
+      print(bolas_num)
+      for i = 1, #G.jokers.cards do
+        if G.jokers.cards[i] == card and i>bolas_num then
+          other_joker = G.jokers.cards[i-bolas_num]
+        end
+      end
+      local ret = SMODS.blueprint_effect(card, other_joker, context)
+      if ret then for i=1,2^bolas_num do SMODS.calculate_effect(ret, card) end end
     end
   end,
 }
