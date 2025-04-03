@@ -18,7 +18,7 @@ SMODS.Joker{
     atlas = 'Jokers',
     pos = {x=1, y=0},
     calculate = function(self, card, context)
-        if context.selling_self and not card.debuff then
+        if context.selling_self and not card.debuff and not context.blueprint then
           for i=1,2 do if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
               SMODS.add_card({key = 'c_hanged_man'})
           end end
@@ -59,7 +59,6 @@ SMODS.Joker{
         if G.playing_cards[i].seal then seal_cards=seal_cards+1 end
       end
       local Xmult_total = 1+card.ability.extra.Xmult_gain*seal_cards
-      -- seal cards function
       return {
         message = localize{type='variable',key='a_xmult',vars={Xmult_total}},
         Xmult_mod = Xmult_total,
@@ -95,7 +94,7 @@ SMODS.Joker{
   atlas = 'Jokers',
   pos = {x=3, y=0},
   calculate = function(self, card, context)
-      if context.selling_self and not card.debuff and G.GAME.blind then
+      if context.selling_self and not card.debuff and G.GAME.blind and not context.blueprint then
           SMODS.calculate_effect({
               message = "+"..card.ability.extra.chip_mod,
               colour = G.C.CHIPS
@@ -135,7 +134,7 @@ SMODS.Joker{
   atlas = 'Jokers',
   pos = {x=4, y=0},
   calculate = function(self, card, context)
-    if context.setting_blind and not card.debuff then
+    if context.setting_blind and not card.debuff and not context.blueprint then
       card.ability.extra.chips_total = card.ability.extra.chips_total-card.ability.extra.chips_loss
       card.ability.extra.xmult_total = card.ability.extra.xmult_total+card.ability.extra.Xmult_gain
       return{
@@ -218,12 +217,12 @@ SMODS.Joker{
   },
   rarity = 3,
   cost = 10,
-  blueprint_compat = true,
+  blueprint_compat = false,
   eternal_compat = true,
   atlas = 'Jokers',
   pos = {x=6, y=0},
   calculate = function(self, card, context)
-    if not card.debuffed and context.final_scoring_step then
+    if not card.debuffed and context.final_scoring_step and not context.blueprint then
       local tot = hand_chips + mult
       hand_chips = mod_chips(math.floor(tot/2))
       mult = mod_mult(math.floor(tot/2))
@@ -271,7 +270,6 @@ SMODS.Joker{
 
 SMODS.Joker{
   key = 'nicol_bolas',
-  name = 'Nicol Bolas',
   loc_txt = {
     name = 'Nicol Bolas',
     text={
@@ -286,7 +284,7 @@ SMODS.Joker{
   atlas = 'Jokers',
   pos = {x=7, y=0},
   calculate = function(self, card, context)
-    if not card.debuff then
+    if not card.debuff and G.jokers.cards[1].config.center.key ~= "j_scryfalatro_nicol_bolas" then
       local other_joker = nil
       local bolas_num = 1
       for i = 1, #G.jokers.cards do
@@ -302,12 +300,44 @@ SMODS.Joker{
         end
       end
       for i = 1, #G.jokers.cards do
-        if G.jokers.cards[i] == card and i>bolas_num then
+        if G.jokers.cards[i] == card and i-bolas_num>0 then
           other_joker = G.jokers.cards[i-bolas_num]
         end
       end
-      local ret = SMODS.blueprint_effect(card, other_joker, context)
-      if ret then for i=1,2^bolas_num do SMODS.calculate_effect(ret, card) end end
+      if context.blueprint then
+        local ret = SMODS.blueprint_effect(context.blueprint_card, other_joker, context)
+        if ret then for i=1,2^bolas_num do SMODS.calculate_effect(ret, context.blueprint_card) end end
+      else
+        local ret = SMODS.blueprint_effect(card, other_joker, context)
+        if ret then for i=1,2^bolas_num do SMODS.calculate_effect(ret, card) end end
+      end
     end
   end,
 }
+
+-- SMODS.Joker{
+--   key = 'inverse_blueprint',
+--   loc_txt = {
+--     name = 'Inverse Blueprint',
+--     text={
+--       "Copies ability of {C:attention}Joker{}",
+--       "to the left",
+--     }
+--   },
+--   rarity = 3,
+--   cost = 10,
+--   blueprint_compat = true,
+--   eternal_compat = true,
+--   atlas = 'Jokers',
+--   pos = {x=0, y=0},
+--   calculate = function(self, card, context)
+--     if not card.debuff and G.jokers.cards[1].config.center.key ~= "j_scryfalatro_inverse_blueprint" then
+--       local other_joker = nil
+--       for i = 1, #G.jokers.cards do
+--           if G.jokers.cards[i] == card and i>1 then other_joker = G.jokers.cards[i-1] end
+--       end
+--       local ret = SMODS.blueprint_effect(card, other_joker, context)
+--       if ret then return ret end
+--     end
+--   end,
+-- }
