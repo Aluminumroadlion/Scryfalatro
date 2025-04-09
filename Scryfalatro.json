@@ -8,7 +8,7 @@
 	"main_file": "Scryfalatro.lua",
     "priority": 0,
     "version": "1.0.0",
-	"badge_colour": "4f4154",
+	"badge_colour": "551a8a",
     "dependencies": [
         "Steamodded (>=1.0.0~ALPHA-1307d)"
     ]

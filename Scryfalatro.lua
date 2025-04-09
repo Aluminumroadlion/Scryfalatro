@@ -1,16 +1,23 @@
 
 SMODS.Atlas { key = 'Jokers', path = 'Jokers.png', px = 71, py = 95 }
 
+SMODS.current_mod.optional_features = function()
+  return {retrigger_joker = true}
+end
+
 SMODS.Joker{
     key = 'jesters_hat',
     loc_txt = {
       name = 'Jester\'s Hat',
       text={
-        "Sell this joker to create",
-        "two {C:attention,T:c_hanged_man}Hanged Man{} tarot",
-        "cards",
-      }
+        "Sell this card to",
+        "create two {C:attention,T:c_hanged_man}Hanged Man{}",
+        "Tarot cards",
+      },
     },
+    loc_vars = function(self, info_queue, card)
+      info_queue[#info_queue + 1] = G.P_CENTERS.c_hanged_man
+    end,
     rarity = 2,
     cost = 7,
     blueprint_compat = false,
@@ -33,7 +40,8 @@ SMODS.Joker{
     text={
       "{X:mult,C:white} X#1# {} Mult for each",
       "card with a {C:attention}seal{} in your",
-      "deck",
+      "full deck",
+      "{C:inactive}(Currently {X:mult,C:white} X#2# {C:inactive} Mult)",
     }
   },
   config = {
@@ -42,8 +50,17 @@ SMODS.Joker{
     }
   },
   loc_vars = function(self, info_queue, card)
+    local seal_cards = 0
+    local Xmult_total = 1
+    if G.playing_cards then
+      for i=1,#G.playing_cards do
+        if G.playing_cards[i].seal then seal_cards=seal_cards+1 end
+      end
+      Xmult_total = 1+card.ability.extra.Xmult_gain*seal_cards
+    end
     return { vars = {
-        card.ability.extra.Xmult_gain
+        card.ability.extra.Xmult_gain,
+        Xmult_total,
     }}
   end,
   rarity = 3,
@@ -73,8 +90,8 @@ SMODS.Joker{
   loc_txt = {
     name = 'Lightning Bolt',
     text={
-      "Sell this joker to add",
-      "{C:chips}+#1#{} chips",
+      "Sell this card to add",
+      "{C:chips}+#1#{} Chips",
     }
   },
   config = {
@@ -94,9 +111,9 @@ SMODS.Joker{
   atlas = 'Jokers',
   pos = {x=3, y=0},
   calculate = function(self, card, context)
-      if context.selling_self and not card.debuff and G.GAME.blind and not context.blueprint then
+      if context.selling_self and not card.debuff and G.GAME.blind.name ~= "" and not context.blueprint then
           SMODS.calculate_effect({
-              message = "+"..card.ability.extra.chip_mod,
+              message = localize{type='variable',key='a_chips',vars={card.ability.extra.chip_mod}},
               colour = G.C.CHIPS
           }, card)
           G.GAME.chips = G.GAME.chips + card.ability.extra.chip_mod
@@ -109,8 +126,11 @@ SMODS.Joker{
   loc_txt = {
     name = 'Cyclonic Rift',
     text={
-      "Gains {C:chips}-#1#{} Chips and {X:mult,C:white} X#2# {}",
-      "Mult when blind selected",
+      "This Joker gains",
+      "{C:chips}-#1#{} Chips and {X:mult,C:white} X#2# {} Mult",
+      "when {C:attention}Blind{} is selected",
+      "{C:inactive}(Currently {C:chips}-#3#{C:inactive} Chips",
+      "{C:inactive}and {X:mult,C:white} X#4# {C:inactive} Mult)",
     }
   },
   config = {
@@ -125,6 +145,8 @@ SMODS.Joker{
     return { vars = {
         card.ability.extra.chips_loss,
         card.ability.extra.Xmult_gain,
+        -card.ability.extra.chips_total,
+        card.ability.extra.xmult_total,
     }}
   end,
   rarity = 2,
@@ -157,12 +179,10 @@ SMODS.Joker{
   loc_txt = {
     name = 'Birds of Paradise',
     text={
-      "Retrigger all played",
-      "cards if poker hand",
-      "contains a {C:diamonds}diamond{}",
-      "{C:diamonds}card{}, {C:clubs}club card{},",
-      "{C:hearts}heart card{}, and {C:spades}spade{}",
-      "{C:spades}card{}"
+      "Retrigger all played cards",
+      "if poker hand contains a",
+      "{C:diamonds}Diamond{} card, {C:clubs}Club{} card,",
+      "{C:hearts}Heart{} card, and {C:spades}Spade{} card",
     }
   },
   rarity = 2,
@@ -211,8 +231,9 @@ SMODS.Joker{
   loc_txt = {
     name = 'Balance',
     text={
-      "Average chips and mult",
-      "before scoring"
+      "Balance {C:blue}Chips{} and",
+      "{C:red}Mult{} when calculating",
+      "score for played hand",
     }
   },
   rarity = 3,
@@ -273,16 +294,57 @@ SMODS.Joker{
   loc_txt = {
     name = 'Nicol Bolas',
     text={
-      "Copies ability of {C:attention}Joker{}",
-      "to the left, twice"
+      "Copies ability of",
+      "{C:attention}Joker{} to the left {C:attention}twice{}",
     }
   },
+  generate_ui = function(self, info_queue, card, desc_nodes, specific_vars, full_UI_table)
+    -- gen base UI
+    SMODS.Center.generate_ui(self, info_queue, card, desc_nodes, specific_vars, full_UI_table)
+    -- add blueprint compat text
+    card.ability.blueprint_compat_ui = card.ability.blueprint_compat_ui or ''; card.ability.blueprint_compat_check = nil
+    desc_nodes[#desc_nodes + 1] = (card.area and card.area == G.jokers) and {
+        {n=G.UIT.C, config={align = "bm", minh = 0.4}, nodes={
+            {n=G.UIT.C, config={ref_table = card, align = "m", colour = G.C.JOKER_GREY, r = 0.05, padding = 0.06, func = 'blueprint_compat'}, nodes={
+                {n=G.UIT.T, config={ref_table = card.ability, ref_value = 'blueprint_compat_ui',colour = G.C.UI.TEXT_LIGHT, scale = 0.32*0.8}},
+            }}
+        }}
+    } or nil
+  end,
   rarity = 4,
   cost = 20,
   blueprint_compat = true,
   eternal_compat = true,
   atlas = 'Jokers',
   pos = {x=7, y=0},
+  update = function(self, card, dt)
+    if G.jokers then
+      local other_joker = nil
+      local bolas_num = 1
+      for i = 1, #G.jokers.cards do
+        if G.jokers.cards[i] == card then
+          local consecutive_bolas = true
+          while consecutive_bolas do
+            if i-bolas_num>0 and G.jokers.cards[i-bolas_num].config.center.key == "j_scryfalatro_nicol_bolas" then
+              bolas_num = bolas_num + 1
+            else
+              consecutive_bolas = false
+            end
+          end
+        end
+      end
+      for i = 1, #G.jokers.cards do
+        if G.jokers.cards[i] == card and i-bolas_num>0 then
+          other_joker = G.jokers.cards[i-bolas_num]
+        end
+      end
+      if other_joker and other_joker ~= card and other_joker.config.center.blueprint_compat then
+        card.ability.blueprint_compat = 'compatible'
+      else
+          card.ability.blueprint_compat = 'incompatible'
+      end
+    end
+  end,
   calculate = function(self, card, context)
     if not card.debuff and G.jokers.cards[1].config.center.key ~= "j_scryfalatro_nicol_bolas" then
       local other_joker = nil
@@ -304,12 +366,14 @@ SMODS.Joker{
           other_joker = G.jokers.cards[i-bolas_num]
         end
       end
-      if context.blueprint then
-        local ret = SMODS.blueprint_effect(context.blueprint_card, other_joker, context)
-        if ret then for i=1,2^bolas_num do SMODS.calculate_effect(ret, context.blueprint_card) end end
-      else
-        local ret = SMODS.blueprint_effect(card, other_joker, context)
-        if ret then for i=1,2^bolas_num do SMODS.calculate_effect(ret, card) end end
+      local ret = nil
+      ret = SMODS.blueprint_effect((context.blueprint and context.blueprint_card) or card, other_joker, context)
+      if ret then return ret end
+      if context.retrigger_joker_check and not context.retrigger_joker and context.other_card == card and bolas_num>0 then
+        return {
+            repetitions = 2^bolas_num-1,
+            card = card,
+        }
       end
     end
   end,
