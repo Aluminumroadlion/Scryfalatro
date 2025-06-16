@@ -346,14 +346,14 @@ SMODS.Joker{
     end
   end,
   calculate = function(self, card, context)
-    if not card.debuff and G.jokers.cards[1].config.center.key ~= "j_scryfalatro_nicol_bolas" then
+    if not card.debuff and G.jokers.cards[1].config.center.key ~= self.key then
       local other_joker = nil
       local bolas_num = 1
       for i = 1, #G.jokers.cards do
         if G.jokers.cards[i] == card then
           local consecutive_bolas = true
           while consecutive_bolas do
-            if i-bolas_num>0 and G.jokers.cards[i-bolas_num].config.center.key == "j_scryfalatro_nicol_bolas" then
+            if i-bolas_num>0 and G.jokers.cards[i-bolas_num].config.center.key == self.key then
               bolas_num = bolas_num + 1
             else
               consecutive_bolas = false
@@ -366,14 +366,23 @@ SMODS.Joker{
           other_joker = G.jokers.cards[i-bolas_num]
         end
       end
-      local ret = nil
-      ret = SMODS.blueprint_effect((context.blueprint and context.blueprint_card) or card, other_joker, context)
-      if ret then return ret end
-      if context.retrigger_joker_check and not context.retrigger_joker and context.other_card == card and bolas_num>0 then
-        return {
-            repetitions = 2^bolas_num-1,
-            card = card,
-        }
+      if context.setting_blind or context.skip_blind or context.open_booster or
+         context.ending_shop or context.discard or context.first_hand_drawn or
+         context.pre_discard then
+        for i=1,2^bolas_num do
+          SMODS.blueprint_effect((context.blueprint and context.blueprint_card) or card, other_joker, context)
+        end
+      else
+        local ret = nil
+        ret = SMODS.blueprint_effect((context.blueprint and context.blueprint_card) or card, other_joker, context)
+        if ret then return ret end
+        if context.retrigger_joker_check and not context.retrigger_joker and context.other_card == card and bolas_num>0 then
+          return {
+              repetitions = 2^bolas_num-1,
+              card = card,
+              remove_default_message = true,
+          }
+        end
       end
     end
   end,
@@ -402,6 +411,37 @@ SMODS.Joker{
 --       end
 --       local ret = SMODS.blueprint_effect(card, other_joker, context)
 --       if ret then return ret end
+--     end
+--   end,
+-- }
+
+-- SMODS.Joker{
+--   key = 'half_chad',
+--   loc_txt = {
+--     name = 'Half Chad',
+--     text={
+--       "Retrigger {C:attention}Joker{}",
+--       "to the left",
+--     }
+--   },
+--   rarity = 3,
+--   cost = 10,
+--   blueprint_compat = true,
+--   eternal_compat = true,
+--   atlas = 'Jokers',
+--   pos = {x=0, y=0},
+--   calculate = function(self, card, context)
+--     if not card.debuff and G.jokers.cards[1].config.center.key ~= "j_scryfalatro_half_chad" then
+--       local other_joker = nil
+--       for i = 1, #G.jokers.cards do
+--           if G.jokers.cards[i] == card and i>1 then other_joker = G.jokers.cards[i-1] end
+--       end
+--     end
+--     if context.retrigger_joker_check and not context.retrigger_joker then
+--       return {
+--           repetitions = 1,
+--           card = other_joker,
+--       }
 --     end
 --   end,
 -- }
