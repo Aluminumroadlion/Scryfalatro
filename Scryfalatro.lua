@@ -21,7 +21,7 @@ SMODS.Joker{
     rarity = 2,
     cost = 7,
     blueprint_compat = false,
-    eternal_compat = true,
+    eternal_compat = false,
     atlas = 'Jokers',
     pos = {x=1, y=0},
     calculate = function(self, card, context)
@@ -107,7 +107,7 @@ SMODS.Joker{
   rarity = 1,
   cost = 3,
   blueprint_compat = false,
-  eternal_compat = true,
+  eternal_compat = false,
   atlas = 'Jokers',
   pos = {x=3, y=0},
   calculate = function(self, card, context)
@@ -299,9 +299,7 @@ SMODS.Joker{
     }
   },
   generate_ui = function(self, info_queue, card, desc_nodes, specific_vars, full_UI_table)
-    -- gen base UI
     SMODS.Center.generate_ui(self, info_queue, card, desc_nodes, specific_vars, full_UI_table)
-    -- add blueprint compat text
     card.ability.blueprint_compat_ui = card.ability.blueprint_compat_ui or ''; card.ability.blueprint_compat_check = nil
     desc_nodes[#desc_nodes + 1] = (card.area and card.area == G.jokers) and {
         {n=G.UIT.C, config={align = "bm", minh = 0.4}, nodes={
@@ -387,61 +385,3 @@ SMODS.Joker{
     end
   end,
 }
-
--- SMODS.Joker{
---   key = 'inverse_blueprint',
---   loc_txt = {
---     name = 'Inverse Blueprint',
---     text={
---       "Copies ability of {C:attention}Joker{}",
---       "to the left",
---     }
---   },
---   rarity = 3,
---   cost = 10,
---   blueprint_compat = true,
---   eternal_compat = true,
---   atlas = 'Jokers',
---   pos = {x=0, y=0},
---   calculate = function(self, card, context)
---     if not card.debuff and G.jokers.cards[1].config.center.key ~= "j_scryfalatro_inverse_blueprint" then
---       local other_joker = nil
---       for i = 1, #G.jokers.cards do
---           if G.jokers.cards[i] == card and i>1 then other_joker = G.jokers.cards[i-1] end
---       end
---       local ret = SMODS.blueprint_effect(card, other_joker, context)
---       if ret then return ret end
---     end
---   end,
--- }
-
--- SMODS.Joker{
---   key = 'half_chad',
---   loc_txt = {
---     name = 'Half Chad',
---     text={
---       "Retrigger {C:attention}Joker{}",
---       "to the left",
---     }
---   },
---   rarity = 3,
---   cost = 10,
---   blueprint_compat = true,
---   eternal_compat = true,
---   atlas = 'Jokers',
---   pos = {x=0, y=0},
---   calculate = function(self, card, context)
---     if not card.debuff and G.jokers.cards[1].config.center.key ~= "j_scryfalatro_half_chad" then
---       local other_joker = nil
---       for i = 1, #G.jokers.cards do
---           if G.jokers.cards[i] == card and i>1 then other_joker = G.jokers.cards[i-1] end
---       end
---     end
---     if context.retrigger_joker_check and not context.retrigger_joker then
---       return {
---           repetitions = 1,
---           card = other_joker,
---       }
---     end
---   end,
--- }
